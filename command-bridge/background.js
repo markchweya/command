@@ -24,6 +24,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   (async () => {
     try {
 
+      // WRITE FILE
       if (message.type === "WRITE_FILE") {
         const data = await callMcp("write_file", {
           path: message.path,
@@ -34,6 +35,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         return;
       }
 
+      // APPLY PATCH
       if (message.type === "APPLY_PATCH") {
         const data = await callMcp("apply_patch", {
           path: message.path,
@@ -45,10 +47,33 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         return;
       }
 
+      // READ FILE
+      if (message.type === "READ_FILE") {
+        const data = await callMcp("read_file", {
+          path: message.path
+        });
+
+        sendResponse({ success: true, data });
+        return;
+      }
+
+      // LIST FILES
+      if (message.type === "LIST_FILES") {
+        const data = await callMcp("list_files", {
+          path: message.path || "."
+        });
+
+        sendResponse({ success: true, data });
+        return;
+      }
+
+      // Unknown message type
+      sendResponse({ success: false, error: "Unknown message type" });
+
     } catch (err) {
       sendResponse({ success: false, error: err.message });
     }
   })();
 
-  return true;
+  return true; // Keep message port open
 });

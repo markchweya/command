@@ -45,7 +45,54 @@ function jsonText(obj) {
 /* -------------------- MCP Server -------------------- */
 
 function createCommandServer() {
-  const server = new McpServer({ name: "command", version: "0.2.0" });
+  const server = new McpServer({ name: "command", version: "0.3.0" });
+
+  /* ---------- LIST FILES ---------- */
+  server.registerTool(
+    "list_files",
+    {
+      title: "List files",
+      description: "Lists files under COMMAND_ROOT.",
+      inputSchema: {
+        path: z.string().optional()
+      }
+    },
+    async (args) => {
+      const rel = args?.path ?? ".";
+      const abs = safeResolve(rel);
+
+      const entries = await fs.readdir(abs, { withFileTypes: true });
+
+      const items = entries.map(entry => ({
+        name: entry.name,
+        type: entry.isDirectory() ? "dir" : "file"
+      }));
+
+      return {
+        content: jsonText({ items })
+      };
+    }
+  );
+
+  /* ---------- READ FILE ---------- */
+  server.registerTool(
+    "read_file",
+    {
+      title: "Read file",
+      description: "Reads a file from COMMAND_ROOT.",
+      inputSchema: {
+        path: z.string().min(1)
+      }
+    },
+    async (args) => {
+      const abs = safeResolve(args.path);
+      const content = await fs.readFile(abs, "utf8");
+
+      return {
+        content: [{ type: "text", text: content }]
+      };
+    }
+  );
 
   /* ---------- WRITE FILE ---------- */
   server.registerTool(
@@ -70,7 +117,7 @@ function createCommandServer() {
     }
   );
 
-  /* ---------- APPLY PATCH (NEW) ---------- */
+  /* ---------- APPLY PATCH ---------- */
   server.registerTool(
     "apply_patch",
     {
@@ -122,38 +169,11 @@ const httpServer = createServer(async (req, res) => {
       return;
     }
 
-    // Simple write endpoint (optional legacy support)
-    if (req.method === "POST" && url.pathname === "/write") {
-      let body = "";
-
-      req.on("data", chunk => body += chunk);
-
-      req.on("end", async () => {
-        try {
-          const { path: relPath, content } = JSON.parse(body);
-
-          const abs = safeResolve(relPath);
-
-          await fs.mkdir(path.dirname(abs), { recursive: true });
-          await fs.writeFile(abs, content, "utf8");
-
-          res.writeHead(200, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({ success: true }));
-
-        } catch (err) {
-          res.writeHead(500, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({ error: err.message }));
-        }
-      });
-
-      return;
-    }
-
     // MCP preflight
     if (req.method === "OPTIONS" && url.pathname === MCP_PATH) {
       res.writeHead(204, {
         "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "POST, GET, OPTIONS, DELETE",
+        "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
         "Access-Control-Allow-Headers": "content-type, mcp-session-id, authorization",
         "Access-Control-Expose-Headers": "Mcp-Session-Id"
       });
