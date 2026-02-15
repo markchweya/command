@@ -3,11 +3,12 @@
 import WebSocket from "ws";
 import { spawn } from "child_process";
 import { v4 as uuid } from "uuid";
+import { fileURLToPath } from "url";
+import path from "path";
 
 const RELAY = "wss://command-9342.onrender.com";
 
 if (process.argv.includes("connect")) {
-
 
   const sessionId = uuid();
   const token = uuid();
@@ -24,13 +25,19 @@ if (process.argv.includes("connect")) {
   ws.on("open", () => {
     console.log("Connected to relay.");
 
-    // Start local MCP server
-    const mcp = spawn("node", ["server.js"], {
+    // Resolve path to internal server.js (NOT project folder)
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+    const serverPath = path.join(__dirname, "server.js");
+
+    // Start local MCP server scoped to current working directory
+    const mcp = spawn("node", [serverPath], {
       env: {
         ...process.env,
-        COMMAND_TOKEN: token
+        COMMAND_TOKEN: token,
+        COMMAND_ROOT: process.cwd() // scope to current folder
       },
-      stdio: ["pipe", "pipe", "pipe"]
+      stdio: ["ignore", "pipe", "pipe"]
     });
 
     mcp.stdout.on("data", (data) => {
@@ -41,6 +48,7 @@ if (process.argv.includes("connect")) {
       process.stderr.write(data.toString());
     });
 
+    // Forward relay messages to local MCP
     ws.on("message", async (msg) => {
       const { requestId, payload } = JSON.parse(msg.toString());
 
@@ -67,17 +75,33 @@ if (process.argv.includes("connect")) {
           requestId,
           payload: {
             jsonrpc: "2.0",
-            error: { code: -32099, message: err.message },
+            error: {
+              code: -32099,
+              message: err.message
+            },
             id: null
           }
         }));
       }
     });
 
+    // Graceful shutdown
+    const shutdown = () => {
+      console.log("\nShutting down...");
+      ws.close();
+      mcp.kill();
+      process.exit();
+    };
+
+    process.on("SIGINT", shutdown);
+    process.on("SIGTERM", shutdown);
   });
 
   ws.on("error", (err) => {
     console.error("WebSocket error:", err.message);
   });
 
+} else {
+  console.log("Usage:");
+  console.log("  command connect");
 }
