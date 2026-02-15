@@ -1,35 +1,32 @@
 {
-  "name": "command",
-  "version": "0.1.0",
-  "private": true,
+  "name": "command-connect",
+  "version": "1.0.1",
+  "description": "Connect ChatGPT to your local VS Code workspace via secure MCP tunnel.",
   "type": "module",
   "bin": {
     "command": "cli.js"
   },
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js"
+    "start": "node server.js"
   },
+  "keywords": [
+    "mcp",
+    "chatgpt",
+    "vscode",
+    "cli",
+    "ai",
+    "developer-tools"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/markchweya/command.git"
+  },
+  "license": "MIT",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.20.2",
-    "body-parser": "^2.2.2",
-    "express": "^5.2.1",
     "node-fetch": "^3.3.2",
     "uuid": "^9.0.1",
     "ws": "^8.19.0",
     "zod": "^3.25.76"
-  },
-  "description": "",
-  "main": "auto-generated.js",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/markchweya/command.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/markchweya/command/issues"
-  },
-  "homepage": "https://github.com/markchweya/command#readme"
+  }
 }

@@ -1,0 +1,8 @@
+command-relay
+command-bridge
+test-folder
+.env.example
+bridge-test.txt
+bridge-tests.txt
+auto-generated.js
+test.js
