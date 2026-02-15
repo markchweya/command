@@ -1,30 +1,39 @@
-chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
-  if (message.type === "WRITE_FILE") {
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type !== "WRITE_FILE") return;
+
+  (async () => {
     try {
-      const res = await fetch("http://localhost:8787/write", {
+      const response = await fetch("http://localhost:8787/mcp", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          "Accept": "application/json, text/event-stream"
         },
         body: JSON.stringify({
-          path: message.path,
-          content: message.content
+          jsonrpc: "2.0",
+          id: Date.now(),
+          method: "tools/call",
+          params: {
+            name: "write_file",
+            arguments: {
+              path: message.path,
+              content: message.content
+            }
+          }
         })
       });
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        sendResponse({ success: false, error: data.error || "Server error" });
-        return;
-      }
+      const data = await response.json();
 
       sendResponse({ success: true, data });
 
     } catch (err) {
-      sendResponse({ success: false, error: err.message });
+      sendResponse({
+        success: false,
+        error: err.message || "Unknown error"
+      });
     }
-  }
+  })();
 
-  return true; // keeps message channel open for async response
+  return true; // critical: keeps port open
 });

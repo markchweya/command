@@ -14,23 +14,6 @@ const MCP_PATH = "/mcp";
 const ROOT = path.resolve(process.env.COMMAND_ROOT ?? process.cwd());
 const TOKEN = process.env.COMMAND_TOKEN ?? "";
 
-const DENY_DIRS = new Set([".git", "node_modules", ".next", "dist", "build", "out"]);
-const MAX_FILE_BYTES = 400_000;
-const MAX_SEARCH_FILES = 4000;
-const MAX_RESULTS = 200;
-
-const ALLOWED_EXECUTABLES = new Set([
-  "npm", "pnpm", "yarn",
-  "node",
-  "python", "python3",
-  "pytest",
-  "git"
-]);
-
-const GIT_ALLOWED_SUBCOMMANDS = new Set([
-  "status", "diff", "log", "show", "branch", "rev-parse"
-]);
-
 /* -------------------- Helpers -------------------- */
 
 function isSubpath(child, parent) {
@@ -55,11 +38,16 @@ function requireAuth(req) {
   }
 }
 
+function jsonText(obj) {
+  return [{ type: "text", text: JSON.stringify(obj) }];
+}
+
 /* -------------------- MCP Server -------------------- */
 
 function createCommandServer() {
   const server = new McpServer({ name: "command", version: "0.2.0" });
 
+  /* ---------- WRITE FILE ---------- */
   server.registerTool(
     "write_file",
     {
@@ -77,7 +65,41 @@ function createCommandServer() {
       await fs.writeFile(abs, args.content, "utf8");
 
       return {
-        content: [{ type: "text", text: JSON.stringify({ success: true }) }]
+        content: jsonText({ success: true })
+      };
+    }
+  );
+
+  /* ---------- APPLY PATCH (NEW) ---------- */
+  server.registerTool(
+    "apply_patch",
+    {
+      title: "Apply patch",
+      description: "Applies a find/replace patch to a file safely.",
+      inputSchema: {
+        path: z.string().min(1),
+        find: z.string().min(1),
+        replace: z.string()
+      }
+    },
+    async (args) => {
+      const abs = safeResolve(args.path);
+
+      const original = await fs.readFile(abs, "utf8");
+
+      if (!original.includes(args.find)) {
+        throw new Error("Target text not found in file.");
+      }
+
+      const updated = original.replace(args.find, args.replace);
+
+      await fs.writeFile(abs, updated, "utf8");
+
+      return {
+        content: jsonText({
+          success: true,
+          message: "Patch applied"
+        })
       };
     }
   );
@@ -100,7 +122,7 @@ const httpServer = createServer(async (req, res) => {
       return;
     }
 
-    // ✅ NEW SIMPLE WRITE ENDPOINT
+    // Simple write endpoint (optional legacy support)
     if (req.method === "POST" && url.pathname === "/write") {
       let body = "";
 
@@ -168,5 +190,6 @@ const httpServer = createServer(async (req, res) => {
 
 httpServer.listen(port, "0.0.0.0", () => {
   console.log(`Command MCP listening on http://localhost:${port}`);
+  console.log(`MCP endpoint: http://localhost:${port}${MCP_PATH}`);
   console.log(`ROOT: ${ROOT}`);
 });

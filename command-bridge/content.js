@@ -1,40 +1,57 @@
+let lastWrittenMessageId = null;
+let debounceTimer = null;
+
 function writeFirstCodeBlock() {
-  if (!window.chrome || !chrome.runtime) return;
+  try {
+    const assistantMessages = document.querySelectorAll('[data-message-author-role="assistant"]');
+    if (!assistantMessages.length) return;
 
-  const blocks = Array.from(document.querySelectorAll("pre"));
+    const lastMessage = assistantMessages[assistantMessages.length - 1];
 
-  if (blocks.length === 0) return;
+    const messageId = lastMessage.getAttribute("data-message-id") || assistantMessages.length;
 
-  const cleaned = blocks.map(pre =>
-    pre.innerText
+    if (messageId === lastWrittenMessageId) {
+      return; // Already processed
+    }
+
+    const codeBlock = lastMessage.querySelector("pre");
+    if (!codeBlock) return;
+
+    const codeToWrite = codeBlock.innerText
       .replace(/^javascript\s*/i, "")
-      .replace(/Copy code\s*/i, "")
-  );
+      .replace(/Copy code\s*/i, "");
 
-  const codeToWrite = cleaned[0];
+    lastWrittenMessageId = messageId;
 
-  chrome.runtime.sendMessage({
-    type: "WRITE_FILE",
-    path: "auto-generated.js",
-    content: codeToWrite
-  }, response => {
-    console.log("Auto write response:", response);
-  });
+    chrome.runtime.sendMessage(
+      {
+        type: "WRITE_FILE",
+        path: "auto-generated.js",
+        content: codeToWrite
+      },
+      (response) => {
+        if (chrome.runtime.lastError) {
+          console.warn("Extension context error:", chrome.runtime.lastError.message);
+          return;
+        }
+
+        console.log("Auto write response:", response);
+      }
+    );
+
+  } catch (err) {
+    console.warn("Content script error:", err.message);
+  }
 }
 
-function observeChatGPT() {
-  const observer = new MutationObserver(() => {
+const observer = new MutationObserver(() => {
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(() => {
     writeFirstCodeBlock();
-  });
+  }, 600); // debounce 600ms
+});
 
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true
-  });
-}
-
-window.addEventListener("load", () => {
-  setTimeout(() => {
-    observeChatGPT();
-  }, 1000);
+observer.observe(document.body, {
+  childList: true,
+  subtree: true
 });
