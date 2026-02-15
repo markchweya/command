@@ -1,39 +1,54 @@
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.type !== "WRITE_FILE") return;
+
+  async function callMcp(toolName, args) {
+    const response = await fetch("http://localhost:8787/mcp", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json, text/event-stream"
+      },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: Date.now(),
+        method: "tools/call",
+        params: {
+          name: toolName,
+          arguments: args
+        }
+      })
+    });
+
+    return response.json();
+  }
 
   (async () => {
     try {
-      const response = await fetch("http://localhost:8787/mcp", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json, text/event-stream"
-        },
-        body: JSON.stringify({
-          jsonrpc: "2.0",
-          id: Date.now(),
-          method: "tools/call",
-          params: {
-            name: "write_file",
-            arguments: {
-              path: message.path,
-              content: message.content
-            }
-          }
-        })
-      });
 
-      const data = await response.json();
+      if (message.type === "WRITE_FILE") {
+        const data = await callMcp("write_file", {
+          path: message.path,
+          content: message.content
+        });
 
-      sendResponse({ success: true, data });
+        sendResponse({ success: true, data });
+        return;
+      }
+
+      if (message.type === "APPLY_PATCH") {
+        const data = await callMcp("apply_patch", {
+          path: message.path,
+          find: message.find,
+          replace: message.replace
+        });
+
+        sendResponse({ success: true, data });
+        return;
+      }
 
     } catch (err) {
-      sendResponse({
-        success: false,
-        error: err.message || "Unknown error"
-      });
+      sendResponse({ success: false, error: err.message });
     }
   })();
 
-  return true; // critical: keeps port open
+  return true;
 });

@@ -1,6 +1,6 @@
-function multiply(a, b) {
+function multiplyNumbers(a, b) {
   return a * b;
 }
 
 // Example usage
-console.log(multiply(3, 4)); // 12
+console.log(multiply(5, 6)); // 30

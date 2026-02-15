@@ -1,40 +1,81 @@
 let lastWrittenMessageId = null;
 let debounceTimer = null;
 
-function writeFirstCodeBlock() {
+function tryParseJSON(text) {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
+}
+
+function processAssistantMessage() {
   try {
     const assistantMessages = document.querySelectorAll('[data-message-author-role="assistant"]');
     if (!assistantMessages.length) return;
 
     const lastMessage = assistantMessages[assistantMessages.length - 1];
 
-    const messageId = lastMessage.getAttribute("data-message-id") || assistantMessages.length;
+    const messageId =
+      lastMessage.getAttribute("data-message-id") ||
+      assistantMessages.length;
 
-    if (messageId === lastWrittenMessageId) {
-      return; // Already processed
-    }
+    if (messageId === lastWrittenMessageId) return;
 
-    const codeBlock = lastMessage.querySelector("pre");
-    if (!codeBlock) return;
+    const codeElement = lastMessage.querySelector("pre code");
+    if (!codeElement) return;
 
-    const codeToWrite = codeBlock.innerText
-      .replace(/^javascript\s*/i, "")
-      .replace(/Copy code\s*/i, "");
+    const rawText = codeElement.textContent.trim();
 
     lastWrittenMessageId = messageId;
+
+    console.log("Raw extracted code:", rawText);
+
+    // Try structured patch
+    const parsed = tryParseJSON(rawText);
+
+    if (
+      parsed &&
+      parsed.file &&
+      parsed.operation === "patch" &&
+      parsed.find &&
+      parsed.replace
+    ) {
+      console.log("Detected PATCH operation");
+
+      chrome.runtime.sendMessage(
+        {
+          type: "APPLY_PATCH",
+          path: parsed.file,
+          find: parsed.find,
+          replace: parsed.replace
+        },
+        (response) => {
+          if (chrome.runtime.lastError) {
+            console.warn("Extension context error:", chrome.runtime.lastError.message);
+            return;
+          }
+          console.log("Patch response:", response);
+        }
+      );
+
+      return;
+    }
+
+    // Normal overwrite mode
+    console.log("Detected normal code block → overwrite mode");
 
     chrome.runtime.sendMessage(
       {
         type: "WRITE_FILE",
         path: "auto-generated.js",
-        content: codeToWrite
+        content: rawText
       },
       (response) => {
         if (chrome.runtime.lastError) {
           console.warn("Extension context error:", chrome.runtime.lastError.message);
           return;
         }
-
         console.log("Auto write response:", response);
       }
     );
@@ -47,8 +88,8 @@ function writeFirstCodeBlock() {
 const observer = new MutationObserver(() => {
   clearTimeout(debounceTimer);
   debounceTimer = setTimeout(() => {
-    writeFirstCodeBlock();
-  }, 600); // debounce 600ms
+    processAssistantMessage();
+  }, 600);
 });
 
 observer.observe(document.body, {
