@@ -2,7 +2,6 @@
 import { createServer } from "node:http";
 import path from "node:path";
 import fs from "node:fs/promises";
-import { spawn } from "node:child_process";
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
@@ -45,7 +44,22 @@ function jsonText(obj) {
 /* -------------------- MCP Server -------------------- */
 
 function createCommandServer() {
-  const server = new McpServer({ name: "command", version: "0.3.0" });
+  const server = new McpServer({ name: "command", version: "0.4.0" });
+
+  /* ---------- GET ROOT ---------- */
+  server.registerTool(
+    "get_root",
+    {
+      title: "Get workspace root",
+      description: "Returns the current project root path.",
+      inputSchema: {}
+    },
+    async () => {
+      return {
+        content: jsonText({ root: ROOT })
+      };
+    }
+  );
 
   /* ---------- LIST FILES ---------- */
   server.registerTool(
@@ -162,14 +176,12 @@ const httpServer = createServer(async (req, res) => {
   try {
     const url = new URL(req.url, `http://${req.headers.host}`);
 
-    // Health check
     if (req.method === "GET" && url.pathname === "/") {
       res.writeHead(200, { "content-type": "text/plain" });
       res.end("Command MCP server");
       return;
     }
 
-    // MCP preflight
     if (req.method === "OPTIONS" && url.pathname === MCP_PATH) {
       res.writeHead(204, {
         "Access-Control-Allow-Origin": "*",
@@ -181,7 +193,6 @@ const httpServer = createServer(async (req, res) => {
       return;
     }
 
-    // MCP handler
     if (url.pathname === MCP_PATH) {
       requireAuth(req);
 
@@ -202,8 +213,16 @@ const httpServer = createServer(async (req, res) => {
     res.writeHead(404).end("Not Found");
 
   } catch (e) {
-    if (!res.headersSent) {
-      res.writeHead(500).end(e?.message ?? "Error");
+    if (res.headersSent) return;
+
+    const message = e?.message ?? "Error";
+
+    if (message === "Unauthorized") {
+      res.writeHead(401).end("Unauthorized");
+    } else if (message === "Path escapes COMMAND_ROOT.") {
+      res.writeHead(400).end(message);
+    } else {
+      res.writeHead(500).end(message);
     }
   }
 });
