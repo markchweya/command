@@ -1,6 +1,6 @@
 {
   "name": "command-connect",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Connect ChatGPT to your local VS Code workspace via secure MCP tunnel.",
   "type": "module",
   "bin": {
