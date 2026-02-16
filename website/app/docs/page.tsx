@@ -1,141 +1,120 @@
+import './docs.css'
+
 export default function DocsPage() {
   return (
-    <div style={{ display: 'flex', fontFamily: '-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif', height: '100vh', overflow: 'hidden' }}>
-      <aside style={{
-        width: 260,
-        padding: '40px 20px',
-        borderRight: '1px solid #eee',
-        height: '100vh',
-        position: 'sticky',
-        top: 0,
-        alignSelf: 'flex-start'
-      }}>
-        <h2 style={{ fontSize: 18, marginBottom: 20 }}>Documentation</h2>
-        <NavItem href="#overview" label="Overview" />
-        <NavItem href="#providers" label="Providers" />
-        <NavItem href="#installation" label="Installation" />
-        <NavItem href="#usage" label="Usage" />
-        <NavItem href="#security" label="Security" />
-        <NavItem href="#architecture" label="Architecture" />
-        <NavItem href="#faq" label="FAQ" />
+    <div className="docs">
+      <aside className="sidebar">
+        <h2>Documentation</h2>
+        <nav>
+          <a href="#overview">Overview</a>
+          <a href="#installation">Installation</a>
+          <a href="#usage">Usage</a>
+          <a href="#command">The Command</a>
+          <a href="#security">Security</a>
+          <a href="#roadmap">Roadmap</a>
+          <a href="#faq">FAQ</a>
+        </nav>
       </aside>
 
-      <main style={{ padding: '60px', maxWidth: 900, height: '100vh', overflowY: 'auto' }}>
-        <Section id="overview" title="Overview">
+      <main className="content">
+        <section id="overview">
+          <h1>Overview</h1>
           <p>
-            Command is a universal local AI bridge that connects Large Language Models
-            (LLMs) to your development workspace. It enables AI systems to safely
-            read, modify, and patch your project files without copy‑paste workflows.
+            Command is a local AI bridge that connects ChatGPT to your development workspace.
+            It allows you to interact with your codebase using natural language — without
+            copy‑paste workflows.
           </p>
           <p>
-            Command does not ship with its own model. It connects your chosen
-            provider to your local project using a controlled execution layer.
+            Command runs entirely on your machine. It does not host or train models.
+            It connects your local project to ChatGPT through a controlled execution layer.
           </p>
-        </Section>
+        </section>
 
-        <Section id="providers" title="Supported Providers">
-          <p>Use the <code>--provider</code> flag to select your LLM:</p>
-          <Code>command connect --provider openai</Code>
-          <Code>command connect --provider claude</Code>
-          <Code>command connect --provider ollama</Code>
-          <Code>command connect --provider grok</Code>
-          <Code>command connect --provider deepseek</Code>
-          <p><strong>Default:</strong> openai</p>
-        </Section>
-
-        <Section id="installation" title="Installation">
+        <section id="installation">
+          <h2>Installation</h2>
           <ul>
             <li>Node.js 18+</li>
             <li>npm</li>
           </ul>
-          <Code>npm install -g command-connect</Code>
-        </Section>
+          <pre><code>npm install -g command-connect</code></pre>
+        </section>
 
-        <Section id="usage" title="Usage Workflow">
-          <ol>
-            <li>Navigate into your project folder</li>
-            <li>Run <code>command connect --provider &lt;provider&gt;</code></li>
-            <li>Provide your API key (if required)</li>
-            <li>Start interacting with your code using natural language</li>
-          </ol>
-          <p>Example prompt:</p>
-          <Code>Refactor all API routes to use async/await.</Code>
-        </Section>
+        <section id="usage">
+          <h2>Usage</h2>
+          <p>
+            Navigate into your project folder and run:
+          </p>
+          <pre><code>command connect</code></pre>
+          <p>
+            You will be prompted for your ChatGPT API key.
+            Once connected, you can begin interacting with your project using natural language.
+          </p>
+          <p>Example:</p>
+          <pre><code>Refactor all API routes to use async/await.</code></pre>
+        </section>
 
-        <Section id="security" title="Security Model">
+        <section id="command">
+          <h2>The Command</h2>
+          <p>
+            Currently, Command supports ChatGPT as its AI provider.
+          </p>
+          <p>
+            The primary command is:
+          </p>
+          <pre><code>command connect</code></pre>
+          <p>
+            This establishes a secure session between ChatGPT and your local workspace.
+          </p>
+        </section>
+
+        <section id="security">
+          <h2>Security Model</h2>
           <ul>
             <li>All file operations execute locally</li>
             <li>No repository upload occurs</li>
-            <li>Provider API keys remain on your machine</li>
-            <li>Session ends when CLI stops</li>
+            <li>Your API key remains on your machine</li>
+            <li>The session ends when the CLI stops</li>
           </ul>
           <p>
-            Command is designed as a single‑developer tool. OAuth is optional
-            because it is not a multi‑user hosted platform.
+            Command is designed as a developer tool — not a hosted platform.
           </p>
-        </Section>
+        </section>
 
-        <Section id="architecture" title="Architecture">
-          <p>Command consists of:</p>
+        <section id="roadmap">
+          <h2>Roadmap</h2>
+          <p>
+            Future versions of Command will support additional AI providers.
+          </p>
+          <p>
+            Planned integrations include:
+          </p>
           <ul>
-            <li>CLI Interface</li>
-            <li>Provider Adapter Layer</li>
-            <li>Local File Execution Engine</li>
+            <li>Claude</li>
+            <li>Local models</li>
+            <li>Additional enterprise providers</li>
           </ul>
           <p>
-            The provider adapter translates model tool calls into structured
-            file operations handled by the local execution engine.
+            For now, ChatGPT is the only supported provider.
           </p>
-        </Section>
+        </section>
 
-        <Section id="faq" title="Frequently Asked Questions">
+        <section id="faq">
+          <h2>Frequently Asked Questions</h2>
+
+          <h3>Does Command host models?</h3>
+          <p>No. It connects your local project to ChatGPT.</p>
+
           <h3>Is my code public?</h3>
-          <p>No. Everything runs locally.</p>
+          <p>No. All execution happens locally.</p>
 
-          <h3>Can I switch providers?</h3>
-          <p>Yes. Restart with a different <code>--provider</code>.</p>
+          <h3>Are multiple providers supported?</h3>
+          <p>Not yet. Additional providers are planned for future releases.</p>
+        </section>
 
-          <h3>Does -g bypass security?</h3>
-          <p>No. It only installs the CLI globally.</p>
-        </Section>
-
-        <div style={{ marginTop: 80, fontSize: 13, color: '#777' }}>
+        <div className="docs-footer">
           Command • Version 1.0.2 • Contact: chweyahub@gmail.com
         </div>
       </main>
     </div>
-  )
-}
-
-function NavItem({ href, label }: { href: string; label: string }) {
-  return (
-    <div style={{ marginBottom: 12 }}>
-      <a href={href} style={{ color: '#444', textDecoration: 'none', fontSize: 14 }}>
-        {label}
-      </a>
-    </div>
-  )
-}
-
-function Section({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
-  return (
-    <section id={id} style={{ marginBottom: 60 }}>
-      <h2 style={{ fontSize: 24, marginBottom: 20 }}>{title}</h2>
-      {children}
-    </section>
-  )
-}
-
-function Code({ children }: { children: React.ReactNode }) {
-  return (
-    <pre style={{
-      background: '#f4f4f4',
-      padding: 16,
-      borderRadius: 8,
-      overflowX: 'auto',
-      marginTop: 12
-    }}>
-      <code>{children}</code>
-    </pre>
   )
 }
