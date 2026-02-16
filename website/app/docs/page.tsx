@@ -8,8 +8,8 @@ export default function DocsPage() {
         <nav>
           <a href="#overview">Overview</a>
           <a href="#installation">Installation</a>
+          <a href="#connect">Connecting to ChatGPT</a>
           <a href="#usage">Usage</a>
-          <a href="#command">The Command</a>
           <a href="#security">Security</a>
           <a href="#roadmap">Roadmap</a>
           <a href="#faq">FAQ</a>
@@ -39,32 +39,51 @@ export default function DocsPage() {
           <pre><code>npm install -g command-connect</code></pre>
         </section>
 
+        <section id="connect">
+          <h2>Connecting to ChatGPT</h2>
+
+          <h3>1. Enable Developer Mode</h3>
+          <p>
+            Open ChatGPT and go to <strong>Settings → Beta features</strong> and enable
+            <strong> Developer Mode</strong> (or GPTs / App creation access if required).
+          </p>
+
+          <h3>2. Create a New App</h3>
+          <p>
+            In ChatGPT, navigate to the GPT / App creation section and create a new app.
+          </p>
+          <ul>
+            <li><strong>App Name:</strong> Command</li>
+            <li><strong>Description:</strong> Connects ChatGPT to a local development workspace.</li>
+            <li><strong>App URL:</strong> Paste the URL provided by <code>command connect</code></li>
+          </ul>
+
+          <h3>3. Run Command Locally</h3>
+          <pre><code>command connect</code></pre>
+          <p>
+            The CLI will start a local bridge and provide you with a URL.
+            Paste that URL into the App configuration inside ChatGPT.
+          </p>
+
+          <h3>4. Connect from ChatGPT</h3>
+          <p>
+            After saving your app, open a new ChatGPT conversation and type:
+          </p>
+          <pre><code>/Command</code></pre>
+          <p>
+            (Replace <strong>Command</strong> with the exact name of your app if different.)
+            This will initiate the connection to your local workspace.
+          </p>
+        </section>
+
         <section id="usage">
           <h2>Usage</h2>
           <p>
-            Navigate into your project folder and run:
-          </p>
-          <pre><code>command connect</code></pre>
-          <p>
-            You will be prompted for your ChatGPT API key.
-            Once connected, you can begin interacting with your project using natural language.
+            Once connected, you can ask ChatGPT to read files, refactor code,
+            or apply structured changes to your project.
           </p>
           <p>Example:</p>
           <pre><code>Refactor all API routes to use async/await.</code></pre>
-        </section>
-
-        <section id="command">
-          <h2>The Command</h2>
-          <p>
-            Currently, Command supports ChatGPT as its AI provider.
-          </p>
-          <p>
-            The primary command is:
-          </p>
-          <pre><code>command connect</code></pre>
-          <p>
-            This establishes a secure session between ChatGPT and your local workspace.
-          </p>
         </section>
 
         <section id="security">
@@ -83,18 +102,8 @@ export default function DocsPage() {
         <section id="roadmap">
           <h2>Roadmap</h2>
           <p>
-            Future versions of Command will support additional AI providers.
-          </p>
-          <p>
-            Planned integrations include:
-          </p>
-          <ul>
-            <li>Claude</li>
-            <li>Local models</li>
-            <li>Additional enterprise providers</li>
-          </ul>
-          <p>
-            For now, ChatGPT is the only supported provider.
+            Future versions of Command will support additional AI providers
+            and expanded integration capabilities.
           </p>
         </section>
 
